@@ -1,0 +1,611 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="ACTS controls evidence acquisition before question writing to synthesize grounded training data for search agents.">
+  <meta name="theme-color" content="#f4f8fb">
+  <meta property="og:title" content="ACTS: Controlling Evidence Acquisition Before Writing Questions for Search Agents">
+  <meta property="og:description" content="Acquisition-controlled task synthesis for grounded, retrieval-intensive search-agent training data.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="assets/motivation.png">
+  <title>ACTS | Acquisition-Controlled Task Synthesis</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="script.js"></script>
+  <script async src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+
+  <header class="site-header">
+    <nav class="nav shell" aria-label="Primary navigation">
+      <a class="wordmark" href="#top" aria-label="ACTS home">
+        <span class="wordmark-mark">A</span>
+        <span>ACTS</span>
+      </a>
+
+      <button class="nav-toggle" type="button" aria-label="Open navigation" aria-expanded="false">
+        <i data-lucide="menu" aria-hidden="true"></i>
+      </button>
+
+      <div class="nav-links">
+        <a href="#abstract">Abstract</a>
+        <a href="#method">Method</a>
+        <a href="#results">Results</a>
+        <a href="#resources">Resources</a>
+        <a class="nav-code" href="https://github.com/YidanHAI/ACTs-project-page" target="_blank" rel="noreferrer">
+          <i data-lucide="github" aria-hidden="true"></i>
+          Project
+        </a>
+      </div>
+    </nav>
+  </header>
+
+  <main id="main-content">
+    <section class="hero" id="top">
+      <div class="shell hero-copy" data-reveal>
+        <p class="eyebrow">Search-agent data synthesis</p>
+        <h1>ACTS</h1>
+        <p class="hero-title">Controlling Evidence Acquisition Before Writing Questions for Search Agents</p>
+        <p class="hero-lede">
+          ACTS constructs how evidence becomes reachable before asking a model
+          to write the question, turning realized acquisition into a controllable
+          source of search supervision.
+        </p>
+
+        <div class="resource-actions" aria-label="Project resources">
+          <a class="button button-primary" href="https://github.com/YidanHAI/ACTs-project-page" target="_blank" rel="noreferrer">
+            <i data-lucide="github" aria-hidden="true"></i>
+            GitHub
+          </a>
+          <button class="button button-secondary" type="button" disabled title="arXiv link will be added after release">
+            <i data-lucide="file-text" aria-hidden="true"></i>
+            Paper
+            <span class="button-state">Soon</span>
+          </button>
+          <button class="button button-secondary" type="button" disabled title="Hugging Face link will be added after release">
+            <i data-lucide="database" aria-hidden="true"></i>
+            Dataset
+            <span class="button-state">Soon</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="shell hero-figure" data-reveal>
+        <a class="figure-link" href="assets/motivation.png" target="_blank" rel="noreferrer" aria-label="Open the motivation figure at full resolution">
+          <img src="assets/motivation.png" alt="The search-demand gap and the ACTS acquisition-controlled solution" fetchpriority="high">
+        </a>
+      </div>
+    </section>
+
+    <section class="stat-band" aria-label="Project summary">
+      <div class="shell stat-grid">
+        <div class="stat" data-reveal>
+          <strong>11,651</strong>
+          <span>curated trajectories</span>
+        </div>
+        <div class="stat" data-reveal>
+          <strong>564,364</strong>
+          <span>structured tool calls</span>
+        </div>
+        <div class="stat" data-reveal>
+          <strong>3</strong>
+          <span>student backbones</span>
+        </div>
+        <div class="stat" data-reveal>
+          <strong>4</strong>
+          <span>full benchmarks</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="abstract">
+      <div class="shell narrow">
+        <header class="section-heading" data-reveal>
+          <p class="section-label">Abstract</p>
+          <h2>Semantic complexity does not determine search demand.</h2>
+        </header>
+
+        <div class="abstract-copy" data-reveal>
+          <p>
+            Search-agent training data must teach a model not only to reason over
+            retrieved facts, but also to discover them through tools. Yet a
+            synthetic question can appear multi-hop while collapsing to a single
+            page, and a larger evidence graph can add redundancy without requiring
+            new retrieval. This mismatch creates a <strong>search-demand gap</strong>
+            between apparent complexity and realized acquisition.
+          </p>
+          <p>
+            ACTS designs a task's evidence-acquisition topology before question
+            writing. It records grounded evidence and acquisition provenance,
+            explores complementary retrieval paths, selects balanced evidence,
+            and independently chooses where construction continues. A writer then
+            realizes the selected evidence as a question, while an independent
+            tool-using teacher produces the training trajectory.
+          </p>
+        </div>
+
+        <div class="thesis-grid">
+          <article class="thesis-item thesis-blue" data-reveal>
+            <span>01</span>
+            <h3>Multi-hop is not multi-retrieval</h3>
+            <p>Several semantic clues can coexist on one page and require only one lookup.</p>
+          </article>
+          <article class="thesis-item thesis-orange" data-reveal>
+            <span>02</span>
+            <h3>Larger is not broader</h3>
+            <p>Additional graph structure can duplicate evidence without expanding acquisition.</p>
+          </article>
+          <article class="thesis-item thesis-green" data-reveal>
+            <span>03</span>
+            <h3>Acquisition can be designed</h3>
+            <p>Construction-time retrieval exposes the paths that question writing should preserve.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-tinted" id="method">
+      <div class="shell">
+        <header class="section-heading section-heading-wide" data-reveal>
+          <div>
+            <p class="section-label">Method</p>
+            <h2>Control what is acquired, what is retained, and where search continues.</h2>
+          </div>
+          <p>
+            ACTS grows linked entity and document-navigation hypergraphs from
+            realized retrieval, then converts selected evidence into independent
+            teacher supervision.
+          </p>
+        </header>
+
+        <div class="module-grid">
+          <article class="module module-blue" data-reveal>
+            <p class="module-index">01 / Representation</p>
+            <h3>LHR</h3>
+            <p>Links grounded semantic evidence to the queries, documents, and bridge entities that made it reachable.</p>
+          </article>
+          <article class="module module-purple" data-reveal>
+            <p class="module-index">02 / Selection</p>
+            <h3>MPF</h3>
+            <p>Evaluates all seven nonempty BFS, DFS, and SA-RW subsets with a lexicographic max-min objective.</p>
+          </article>
+          <article class="module module-green" data-reveal>
+            <p class="module-index">03 / Continuation</p>
+            <h3>RCD</h3>
+            <p>Retains evidence for writing and selects the next frontier as separate construction decisions.</p>
+          </article>
+        </div>
+
+        <figure class="paper-figure" data-reveal>
+          <a class="figure-link" href="assets/method-overview.png" target="_blank" rel="noreferrer" aria-label="Open the method figure at full resolution">
+            <img src="assets/method-overview.png" alt="Detailed ACTS construction and supervision pipeline" loading="lazy">
+          </a>
+          <figcaption>
+            ACTS executes complementary grounded expansions from a shared state,
+            records linked acquisition provenance, selects a committed topology,
+            and produces independently solved SFT trajectories.
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section" id="results">
+      <div class="shell">
+        <header class="section-heading section-heading-wide" data-reveal>
+          <div>
+            <p class="section-label">Results</p>
+            <h2>One synthesis recipe transfers across students and search settings.</h2>
+          </div>
+          <p>
+            ACTS models use SFT alone. ReAct and ACTS rows are evaluated on the
+            complete test sets under the same anti-contamination protocol.
+          </p>
+        </header>
+
+        <div class="result-tabs" role="tablist" aria-label="Result views" data-reveal>
+          <button class="result-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="panel-benchmarks" id="tab-benchmarks" data-tab="benchmarks">
+            <i data-lucide="bar-chart-3" aria-hidden="true"></i>
+            Benchmarks
+          </button>
+          <button class="result-tab" type="button" role="tab" aria-selected="false" aria-controls="panel-ablation" id="tab-ablation" data-tab="ablation">
+            <i data-lucide="network" aria-hidden="true"></i>
+            Ablation
+          </button>
+          <button class="result-tab" type="button" role="tab" aria-selected="false" aria-controls="panel-quest" id="tab-quest" data-tab="quest">
+            <i data-lucide="git-compare-arrows" aria-hidden="true"></i>
+            QUEST
+          </button>
+          <button class="result-tab" type="button" role="tab" aria-selected="false" aria-controls="panel-fidelity" id="tab-fidelity" data-tab="fidelity">
+            <i data-lucide="route" aria-hidden="true"></i>
+            Fidelity
+          </button>
+        </div>
+
+        <div class="result-panel is-active" id="panel-benchmarks" role="tabpanel" aria-labelledby="tab-benchmarks" data-panel="benchmarks">
+          <div class="result-summary">
+            <div>
+              <span>BrowseComp</span>
+              <strong>67.61%</strong>
+              <small>Qwen3.8-27B + ACTS</small>
+            </div>
+            <div>
+              <span>xBench-2510</span>
+              <strong>67.00%</strong>
+              <small>Qwen3.8-27B + ACTS</small>
+            </div>
+            <div>
+              <span>SEAL-0</span>
+              <strong>58.56%</strong>
+              <small>Qwen3.8-27B + ACTS</small>
+            </div>
+            <div>
+              <span>HLE-Text</span>
+              <strong>52.13%</strong>
+              <small>Qwen3.8-27B + ACTS</small>
+            </div>
+          </div>
+
+          <div class="table-shell">
+            <table>
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Supervision</th>
+                  <th>SFT data</th>
+                  <th>BrowseComp</th>
+                  <th>xBench-2510</th>
+                  <th>SEAL-0</th>
+                  <th>HLE-Text</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Qwen3-30B</td>
+                  <td>ReAct</td>
+                  <td>-</td>
+                  <td>2.61</td>
+                  <td>5.00</td>
+                  <td>7.21</td>
+                  <td>9.27</td>
+                </tr>
+                <tr class="acts-row">
+                  <td>Qwen3-30B</td>
+                  <td>ACTS</td>
+                  <td>11,651</td>
+                  <td>43.76</td>
+                  <td>39.00</td>
+                  <td>31.53</td>
+                  <td>26.83</td>
+                </tr>
+                <tr class="acts-row">
+                  <td>Qwen3-30B</td>
+                  <td>ACTS, multi-teacher</td>
+                  <td>16,792</td>
+                  <td>50.47</td>
+                  <td>45.00</td>
+                  <td>33.33</td>
+                  <td>32.48</td>
+                </tr>
+                <tr>
+                  <td>Qwen3.5-35B</td>
+                  <td>ReAct</td>
+                  <td>-</td>
+                  <td>40.92</td>
+                  <td>49.00</td>
+                  <td>39.64</td>
+                  <td>30.72</td>
+                </tr>
+                <tr class="acts-row">
+                  <td>Qwen3.5-35B</td>
+                  <td>ACTS</td>
+                  <td>11,651</td>
+                  <td>61.45</td>
+                  <td>56.00</td>
+                  <td>48.65</td>
+                  <td>47.36</td>
+                </tr>
+                <tr>
+                  <td>Qwen3.8-27B</td>
+                  <td>ReAct</td>
+                  <td>-</td>
+                  <td>49.05</td>
+                  <td>61.00</td>
+                  <td>50.45</td>
+                  <td>47.78</td>
+                </tr>
+                <tr class="acts-row best-row">
+                  <td>Qwen3.8-27B</td>
+                  <td>ACTS</td>
+                  <td>11,651</td>
+                  <td>67.61</td>
+                  <td>67.00</td>
+                  <td>58.56</td>
+                  <td>52.13</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p class="result-takeaway">
+            The shared 11,651-trajectory set improves every matched backbone on
+            all four benchmarks. BrowseComp gains are +41.15, +20.53, and +18.56
+            points across Qwen3, Qwen3.5, and Qwen3.8.
+          </p>
+        </div>
+
+        <div class="result-panel" id="panel-ablation" role="tabpanel" aria-labelledby="tab-ablation" data-panel="ablation" hidden>
+          <div class="table-shell">
+            <table>
+              <thead>
+                <tr>
+                  <th>Construction arm</th>
+                  <th>Tool-required</th>
+                  <th>Teacher solve</th>
+                  <th>Calls</th>
+                  <th>Sources</th>
+                  <th>TW &ge; 4</th>
+                  <th>BC-130</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Ordinary-graph SA-RW</td>
+                  <td>32.12</td>
+                  <td>77.06</td>
+                  <td>27.47</td>
+                  <td>4.50</td>
+                  <td>0.00</td>
+                  <td>36.15</td>
+                </tr>
+                <tr>
+                  <td>Hypergraph SA-RW</td>
+                  <td>31.80</td>
+                  <td>76.22</td>
+                  <td>28.71</td>
+                  <td>4.63</td>
+                  <td>31.34</td>
+                  <td>37.69</td>
+                </tr>
+                <tr>
+                  <td>All-branch union</td>
+                  <td>34.59</td>
+                  <td>69.39</td>
+                  <td>31.10</td>
+                  <td>10.76</td>
+                  <td>58.69</td>
+                  <td>41.54</td>
+                </tr>
+                <tr>
+                  <td>Entity-only selector</td>
+                  <td>34.51</td>
+                  <td>69.56</td>
+                  <td>30.69</td>
+                  <td>9.34</td>
+                  <td>54.47</td>
+                  <td>43.08</td>
+                </tr>
+                <tr>
+                  <td>Size-matched random</td>
+                  <td>33.77</td>
+                  <td>69.33</td>
+                  <td>30.04</td>
+                  <td>9.82</td>
+                  <td>52.24</td>
+                  <td>42.31</td>
+                </tr>
+                <tr class="acts-row best-row">
+                  <td>ACTS</td>
+                  <td>33.28</td>
+                  <td>70.17</td>
+                  <td>31.60</td>
+                  <td>9.69</td>
+                  <td>57.01</td>
+                  <td>45.38</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="evidence-grid">
+            <div class="evidence-item">
+              <strong>2.15x</strong>
+              <span>source breadth over ordinary-graph SA-RW</span>
+            </div>
+            <div class="evidence-item">
+              <strong>+9.23</strong>
+              <span>BC-130 points over ordinary-graph SA-RW</span>
+            </div>
+            <div class="evidence-item">
+              <strong>-1.07</strong>
+              <span>sources versus all-branch union, with higher accuracy</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="result-panel" id="panel-quest" role="tabpanel" aria-labelledby="tab-quest" data-panel="quest" hidden>
+          <div class="comparison-lead">
+            <div>
+              <span>QUEST BC-130</span>
+              <strong>+8.46</strong>
+              <small>accuracy points</small>
+            </div>
+            <div>
+              <span>BC-200 diagnostic</span>
+              <strong>+13.50</strong>
+              <small>accuracy points</small>
+            </div>
+          </div>
+
+          <div class="table-shell">
+            <table>
+              <thead>
+                <tr>
+                  <th>Training recipe</th>
+                  <th>SFT trajectories</th>
+                  <th>Tool calls</th>
+                  <th>Epochs</th>
+                  <th>QUEST BC-130</th>
+                  <th>BC-200</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="acts-row best-row">
+                  <td>ACTS</td>
+                  <td>4,670</td>
+                  <td>243,613</td>
+                  <td>6</td>
+                  <td>68.46</td>
+                  <td>65.00</td>
+                </tr>
+                <tr>
+                  <td>QUEST</td>
+                  <td>4,516</td>
+                  <td>135,898</td>
+                  <td>6</td>
+                  <td>60.00</td>
+                  <td>51.50</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p class="result-takeaway">
+            The matched comparison uses similarly sized Kimi-K3 trajectory sets,
+            the same tools, six-epoch Qwen3.8-27B SFT, and the same evaluation
+            protocol.
+          </p>
+        </div>
+
+        <div class="result-panel" id="panel-fidelity" role="tabpanel" aria-labelledby="tab-fidelity" data-panel="fidelity" hidden>
+          <div class="fidelity-layout">
+            <div class="fidelity-copy">
+              <p class="section-label">Independent teacher search</p>
+              <h3>Construction paths reappear after question writing.</h3>
+              <p>
+                The teacher sees only the question and tools. Aligned paths
+                strongly reappear in its searches, opened sources, and observed
+                entities, while mismatched controls remain below 1%.
+              </p>
+              <div class="mechanism-pair">
+                <div>
+                  <strong>71.02% &rarr; 19.55%</strong>
+                  <span>multi-policy retention as overlap rises after round 1</span>
+                </div>
+                <div>
+                  <strong>36.75%</strong>
+                  <span>continuations selected outside the retained subset</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="table-shell">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Signal</th>
+                    <th>Aligned</th>
+                    <th>Half-shift</th>
+                    <th>Random</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Question path-node coverage</td>
+                    <td class="accent-value">62.78</td>
+                    <td>0.76</td>
+                    <td>0.83</td>
+                  </tr>
+                  <tr>
+                    <td>Bridge terms searched</td>
+                    <td class="accent-value">51.04</td>
+                    <td>0.69</td>
+                    <td>0.67</td>
+                  </tr>
+                  <tr>
+                    <td>Path nodes recovered</td>
+                    <td class="accent-value">59.95</td>
+                    <td>0.71</td>
+                    <td>0.75</td>
+                  </tr>
+                  <tr>
+                    <td>Construction source opened</td>
+                    <td class="accent-value">66.37</td>
+                    <td>0.24</td>
+                    <td>0.31</td>
+                  </tr>
+                  <tr>
+                    <td>Path-order LCS recall</td>
+                    <td class="accent-value">41.52</td>
+                    <td>0.68</td>
+                    <td>0.69</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-dark" id="resources">
+      <div class="shell">
+        <header class="section-heading section-heading-wide" data-reveal>
+          <div>
+            <p class="section-label">Resources</p>
+            <h2>Project page now. Paper, code, and data at release.</h2>
+          </div>
+          <p>
+            Release links will be enabled here as the corresponding artifacts
+            become publicly available.
+          </p>
+        </header>
+
+        <div class="resource-grid">
+          <article class="resource-card" data-reveal>
+            <i data-lucide="github" aria-hidden="true"></i>
+            <div>
+              <h3>Project repository</h3>
+              <p>Website source, figures, and future release updates.</p>
+            </div>
+            <a href="https://github.com/YidanHAI/ACTs-project-page" target="_blank" rel="noreferrer" aria-label="Open the ACTS project repository on GitHub">
+              <i data-lucide="arrow-up-right" aria-hidden="true"></i>
+            </a>
+          </article>
+
+          <article class="resource-card is-pending" data-reveal>
+            <i data-lucide="file-text" aria-hidden="true"></i>
+            <div>
+              <h3>Paper</h3>
+              <p>Full method, evaluation protocol, analysis, and appendices.</p>
+            </div>
+            <span>Coming soon</span>
+          </article>
+
+          <article class="resource-card is-pending" data-reveal>
+            <i data-lucide="database" aria-hidden="true"></i>
+            <div>
+              <h3>Training data</h3>
+              <p>11,651 curated trajectories with structured tool interactions.</p>
+            </div>
+            <span>Coming soon</span>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <div>
+        <strong>ACTS</strong>
+        <span>Acquisition-Controlled Task Synthesis</span>
+      </div>
+      <a href="https://github.com/YidanHAI/ACTs-project-page" target="_blank" rel="noreferrer">
+        Apache-2.0
+        <i data-lucide="external-link" aria-hidden="true"></i>
+      </a>
+    </div>
+  </footer>
+</body>
+</html>
