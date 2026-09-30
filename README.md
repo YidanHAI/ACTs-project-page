@@ -2,6 +2,8 @@
 
 Official project page for **ACTS: Controlling Evidence Acquisition Before Writing Questions for Search Agents**.
 
+**Website:** https://yidanhai.github.io/ACTs-project-page/
+
 The site presents the motivation, method overview, and main experimental results. Links to the paper, source code, and dataset will be enabled when those artifacts are released.
 
 ## Local Preview
